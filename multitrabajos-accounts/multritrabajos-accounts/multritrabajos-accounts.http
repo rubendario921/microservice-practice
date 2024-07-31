@@ -1,0 +1,6 @@
+@multritrabajos_accounts_HostAddress = http://localhost:5101
+
+GET {{multritrabajos_accounts_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,6 @@
+@multitrabajos_history_HostAddress = http://localhost:5237
+
+GET {{multitrabajos_history_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

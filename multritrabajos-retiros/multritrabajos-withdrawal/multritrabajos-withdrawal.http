@@ -1,0 +1,6 @@
+@multritrabajos_withdrawal_HostAddress = http://localhost:5003
+
+GET {{multritrabajos_withdrawal_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
