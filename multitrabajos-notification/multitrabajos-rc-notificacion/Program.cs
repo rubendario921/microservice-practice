@@ -1,3 +1,7 @@
+using Consul;
+using Cordillera.Distribuidas.Discovery.Consul;
+using Cordillera.Distribuidas.Discovery.Fabio;
+using Cordillera.Distribuidas.Discovery.Mvc;
 using Microsoft.EntityFrameworkCore;
 using multitrabajos_rc_notificacion.Data;
 using multitrabajos_rc_notificacion.Repositories;
@@ -21,7 +25,13 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+// Configuración de Consul
+builder.Services.AddSingleton<IServiceId, ServiceId>();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddConsul();
 
+// Configuración de Fabio (asume que AddFabio es un método de extensión personalizado)
+builder.Services.AddFabio();
 var app = builder.Build();
 
 //Create Database
@@ -46,8 +56,15 @@ using (var scope = app.Services.CreateScope())
         app.UseSwagger();
         app.UseSwaggerUI();
     }
-
-    app.UseAuthorization();
+// Configuración de Consul para el registro y desregistro del servicio
+var serviceId = app.UseConsul();
+IHostApplicationLifetime applicationLifetime = app.Lifetime;
+var consulClient = app.Services.GetRequiredService<IConsulClient>();
+applicationLifetime.ApplicationStopped.Register(() =>
+{
+    consulClient.Agent.ServiceDeregister(serviceId);
+});
+app.UseAuthorization();
 
     app.MapControllers();
 

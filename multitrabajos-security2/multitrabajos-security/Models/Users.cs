@@ -6,7 +6,7 @@ namespace multitrabajos_security.Models
 {
     public class Users
     {
-        [Key]
+        [Key]        
         public int Id { get; set; }
         public required string Name { get; set; }
         public required string LastName { get; set; }

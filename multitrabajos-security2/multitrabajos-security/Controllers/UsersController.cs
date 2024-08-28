@@ -18,135 +18,113 @@ namespace multitrabajos_security.Controllers
         }
 
         [HttpGet]
+        [Route("GetAllUsers")]
         //AuthorizeAttribute()
-        public async Task<ActionResult> get()
+        public async Task<ActionResult<IEnumerable<DTOs.UserDTO>>> GetAllUsers()
         {
-            var result = await _serviceUsers.getAll();
-            return Ok(new
+            var result = await _serviceUsers.GetAllUsers();
+            if (result == null)
             {
-                result = result,
-                message = result != null ? "OK" : "Not Content"
-            });
+                return NotFound($"No existe informacion registrada.");
+            }
+            return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult> getUserbyId(int id)
+        [HttpGet]
+        [Route("GetUserById/{id}")]
+        public async Task<ActionResult<DTOs.UserDTO>> GetUserById(int id)
         {
-            try
+            if (id <= 0)
             {
-                if (id <= 0)
-                {
-                    throw new Exception($"Valor de id: {id} no es el correcto.");
-                }
-                else
-                {
-                    var result = await _serviceUsers.getUserbyId(id);
-                    if (result != null)
-                    {
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        return NotFound($"No existe informacion con el id:{id}");
-                    }
-                }
+                return BadRequest($"Error, Id {id} vacio o incorrecto.");
             }
-            catch (Exception ex)
+            var result = await _serviceUsers.GetUserById(id);
+            if (result == null)
             {
-                Console.WriteLine($"{ex.Message}");
-                throw;
+                return BadRequest($"No existe informacion por ID: {id} registrado.");
             }
+            return Ok(result);
         }
 
         [HttpPost]
-        public async Task<ActionResult> saveUser(UserRequest userRequest)
+        [Route("SaveUser")]
+        public async Task<ActionResult<bool>> SaveUser(DTOs.UserDTO userDTO)
         {
-            try
+            if (userDTO == null)
             {
-                if (userRequest == null)
-                {
-                    throw new Exception("Los datos a ingresar estan vacios.");
-                }
-                else
-                {
-                    Models.Users userData = new Models.Users { Id = userRequest.Id, Name = userRequest.Name, LastName = userRequest.LastName, Email = userRequest.Email, Password = userRequest.Password, PhoneNumber = userRequest.PhoneNumber, RolID = userRequest.RolID };
-
-                    var resultSave = await _serviceUsers.saveUser(userData);
-                    if (resultSave)
-                    {
-                        return Ok(resultSave);
-                    }
-                    else
-                    {
-                        throw new Exception($"Error al registrar los datos: {userData}");
-                    }
-                }
+                return BadRequest($"Campos vacios o incorrectos, intente nuevamente.");
             }
-            catch (Exception ex)
+            //Transformar de DTO a Model
+            Models.Users dataUser = new()
             {
-                Console.WriteLine($"{ex.Message}");
-                throw;
-            }
+                Name = userDTO.Name,
+                LastName = userDTO.LastName,
+                Email = userDTO.Email,
+                Password = userDTO.Password,
+                PhoneNumber = userDTO.PhoneNumber,
+                Status = "A",
+                DateAdd = DateTime.UtcNow,
+                RolID = userDTO.RolID,
+            };
 
+            var result = await _serviceUsers.SaveUser(dataUser);
+            if (result)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest($"Error, usuario registrado");
+            }
         }
         [HttpPut]
-        public async Task<ActionResult> updateUser(UserRequest userRequest)
+        [Route("UpdateUser/{id}")]
+        public async Task<ActionResult<bool>> UpdateUser(int id, DTOs.UserDTO userDTO)
         {
-            try
-            {
-                if (userRequest == null)
-                {
-                    throw new Exception($"Los datos a ingresar estan vacios.");
-                }
-                else
-                {
-                    Models.Users userData = new Models.Users { Id = userRequest.Id, Name = userRequest.Name, LastName = userRequest.LastName, Email = userRequest.Email, Password = userRequest.Password, PhoneNumber = userRequest.PhoneNumber, RolID = userRequest.RolID };
+            if (id <= 0) { return BadRequest($"Id: {id} incorrecto o vacio."); }
 
-                    var resultUpdate = await _serviceUsers.updateUser(userData);
-                    if (resultUpdate)
-                    {
-                        return Ok(resultUpdate);
-                    }
-                    else
-                    {
-                        throw new Exception($"Error al registrar los datos: {userData}");
-                    }
-                }
-            }
-            catch (Exception ex)
+            var consult = await _serviceUsers.GetUserById(id);
+            if (consult == null)
             {
-                Console.WriteLine($"{ex.Message}");
-                throw;
+                return BadRequest($"Error, User por Id: {id} no registrado");
+            }
+
+            if (userDTO == null)
+            {
+                return BadRequest($"Campos vacios o incorrectos, intente nuevamente.");
+            }
+
+            //Transformar DTO a Model
+            Models.Users dataUser = new()
+            {
+                Id = consult.Id,
+                Name = userDTO.Name,
+                LastName = userDTO.LastName,
+                Email = userDTO.Email,
+                Password = userDTO.Password,
+                PhoneNumber = userDTO.PhoneNumber,
+                Status = "A",
+                DateAdd = DateTime.UtcNow,
+                RolID = userDTO.RolID,
+            };
+
+            var result = await _serviceUsers.UpdateUser(dataUser);
+            if (result) { return Ok(result); }
+            else
+            {
+                return BadRequest($"Error, User no actualizado, campos incorrectos o vacios");
             }
         }
 
         [HttpDelete]
-        public async Task<ActionResult> deleteUser(int id)
+        [Route("DeleteUser")]
+        public async Task<ActionResult<bool>> DeleteUser(int id)
         {
-            try
-            {
-                if (id <= 0)
-                {
-                    throw new Exception($"Valor de Id:{id} no es el correcto.");
-                }
-                else
-                {
-                    var resultDelete = await _serviceUsers.deleteUser(id);
-                    if (resultDelete)
-                    {
-                        return Ok(resultDelete);
-                    }
-                    else
-                    {
-                        throw new Exception($"Error en borrar los datos con el Id: {id}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"{ex.Message}");
-                throw;
-            }
+            if (id <= 0) { return BadRequest($"Id: {id} incorrecto o vacio."); }
+            var result = await _serviceUsers.DeleteUser(id);
+            if (result) { return Ok(result); } else { return BadRequest($"Error, User no eliminado, intente nuevamnete"); }
+
+
         }
     }
 }

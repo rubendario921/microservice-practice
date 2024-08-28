@@ -13,8 +13,8 @@ namespace multitrabajos_security.Data
             }
             var rols = new Models.Rols[]
                 {
-                new Models.Rols{ Id=1,Description="Administracion",Status="A",CreateAdd = DateTime.UtcNow},
-                new Models.Rols{ Id=2,Description="Student",Status="A",CreateAdd = DateTime.UtcNow}
+                new() { Id=1,Description="Administracion",Status="A",CreateAdd = DateTime.UtcNow},
+                new (){ Id=2,Description="Student",Status="A",CreateAdd = DateTime.UtcNow}
                 };
             foreach (var item in rols)
             {

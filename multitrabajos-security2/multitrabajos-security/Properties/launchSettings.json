@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "http": {
+    "multitrabajos-security": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

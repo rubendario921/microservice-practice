@@ -9,6 +9,6 @@ namespace multitrabajos_security.Models
         public required string Description { get; set; }
         public required string Status { get; set; }
         public DateTime CreateAdd { get; set; }
-        public virtual ICollection<Users> Usuarios { get; set; }
+        public virtual ICollection<Users> Users { get; set; } = [];
     }
 }

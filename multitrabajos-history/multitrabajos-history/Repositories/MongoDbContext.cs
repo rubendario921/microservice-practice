@@ -17,7 +17,7 @@ namespace multitrabajos_history.Repositories
 
         public IMongoCollection<T> GetCollection<T>(string name)
         {
-            throw new NotImplementedException();
+            return _db.GetCollection<T>(name);
         }
     }
 }

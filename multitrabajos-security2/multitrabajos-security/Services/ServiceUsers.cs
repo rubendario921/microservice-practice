@@ -13,136 +13,142 @@ namespace multitrabajos_security.Services
             _datacontext = datacontext;
             _configuration = configuration;
         }
-        public async Task<IEnumerable<Users>> getAll()
+        public async Task<IEnumerable<DTOs.UserDTO>> GetAllUsers()
         {
             try
             {
-                var result = await _datacontext.Users.Where(x => x.Status.Equals("A")).ToListAsync();
-                if(!result.Any()) {
-                    throw new Exception("No existe informacion registrada.");
-                }
-                else { 
-                    return result;
-                }
+                var result = await _datacontext.Users.Include(r => r.Rol).Select(u => new DTOs.UserDTO { Id = u.Id, Name = u.Name, LastName = u.LastName, Email = u.Email, Password = u.Password, PhoneNumber = u.PhoneNumber, Status = u.Status, DateAdd = u.DateAdd, RolID = u.RolID, RolName = u.Rol.Description }).Where(x => x.Status == "A").ToListAsync();
+                return result;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"Error en GetAllUsers: {ex.Message}");
                 throw;
             }
         }
-        public async Task<Users> getUserbyId(int id)
+        public async Task<DTOs.UserDTO> GetUserById(int id)
         {
             try
             {
-                if (id <= 0)
+                var result = await _datacontext.Users.Where(u => u.Id.Equals(id)).Include(u => u.Rol).Select(u => new DTOs.UserDTO
                 {
-                    throw new Exception($"El valor del Id:{id} no es correcto.");
-                }
-                else
-                {
-                    var result = await _datacontext.Users.Where(x => x.Status.Equals("A") && x.Id.Equals(id)).FirstOrDefaultAsync();
-                    if (result == null)
-                    {
-                        throw new Exception($"No existe informacion con el id:{id} ingresado.");
-                    }
-                    else { return result; }                    
-                }                
+                    Id = u.Id,
+                    Name = u.Name,
+                    LastName = u.LastName,
+                    Email = u.Email,
+                    Password = u.Password,
+                    PhoneNumber = u.PhoneNumber,
+                    Status = u.Status,
+                    DateAdd = u.DateAdd,
+                    RolID = u.RolID,
+                    RolName = u.Rol.Description
+                }).FirstOrDefaultAsync();
+                return result!;
+
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"Error en GetUserbyId: {ex.Message}");
                 throw;
             }
         }
-        public async Task<Users> getUserbyEmail(string email)
+        public async Task<DTOs.UserDTO> GetUserByEmail(string email)
         {
             try
             {
-                if (email ==null)
+                var result = await _datacontext.Users.Where(u => u.Email.Equals(email)).Include(u => u.Rol).Select(u => new DTOs.UserDTO
                 {
-                    throw new Exception($"El email :{email} tiene un campo vacio.");
-                }
-                else
-                {
-                    var result = await _datacontext.Users.Where(x => x.Status.Equals("A") && x.Email.Equals(email)).FirstOrDefaultAsync();
-                    if (result == null)
-                    {
-                        throw new Exception($"No existe informacion con el correo: {email} ingresado.");
-                    }
-                    else { return result; }
-                }
+                    Id = u.Id,
+                    Name = u.Name,
+                    LastName = u.LastName,
+                    Email = u.Email,
+                    Password = u.Password,
+                    PhoneNumber = u.PhoneNumber,
+                    Status = u.Status,
+                    DateAdd = u.DateAdd,
+                    RolID = u.RolID,
+                    RolName = u.Rol.Description
+                }).FirstOrDefaultAsync();
+                return result!;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"Error en GetUserbyEmail: {ex.Message}");
                 throw;
             }
-        }        
-        public async Task<bool> saveUser(Users user)
+        }
+        public async Task<bool> SaveUser(Users user)
         {
             try
             {
-                var userExist = await getUserbyEmail(user.Email);
-                if (userExist == null)
-                {
-                    throw new Exception($"El {userExist} no esta registrado.");
-                }
-                else
-                {
-                    user.DateAdd = DateTime.UtcNow;
-                    user.Status = "A";
-                    _datacontext.Add(user);
+                var dataUser = await GetUserByEmail(user.Email);
+                if (dataUser == null)
+                {                    
+                    _datacontext.Users.Add(user);
                     return await _datacontext.SaveChangesAsync() > 0;
                 }
+                else
+                {
+                    throw new Exception($"Datos vacios o incompletos, intente nuevamente.");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{ex.Message}");
+                Console.WriteLine($"Error en SaveUser: {ex.Message}");
                 throw;
             }
         }
 
-        public async Task<bool> updateUser(Users user)
+        public async Task<bool> UpdateUser(Users user)
         {
             try
             {
-                var userExist = await getUserbyId(user.Id);
-                if (userExist == null)
+                var dataUser = await GetUserById(user.Id);
+                if (dataUser != null)
                 {
-                    throw new Exception($"El {userExist} no esta registrado.");
-                }
-                else
-                {
+                    //Actualización de datos
+                    //dataUser.Name = user.Name;
+                    //dataUser.LastName = user.LastName;
+                    //dataUser.Email = user.Email;
+                    //dataUser.Password = user.Password;
+                    //dataUser.PhoneNumber = user.PhoneNumber;
+                    //dataUser.Status = "A";
+                    //dataUser.DateAdd = DateTime.UtcNow;
+                    //dataUser.RolID = user.RolID;
+
                     _datacontext.Entry(user).State = EntityState.Modified;
                     return await _datacontext.SaveChangesAsync() > 0;
                 }
+                else
+                {
+                    throw new Exception($"Error, User no registrado.");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{ex.Message}");
+                Console.WriteLine($"Error en UpdateUser: {ex.Message}");
                 throw;
             }
         }
-        public async Task<bool> deleteUser(int id)
+        public async Task<bool> DeleteUser(int id)
         {
             try
             {
-                var userExist = await getUserbyId(id);
-                if (userExist == null)
+                var dataUser = await GetUserById(id);
+                if (dataUser != null)
                 {
-                    throw new Exception($"El {userExist} no esta registrado.");
+                    dataUser.Status = "I";
+                    _datacontext.Entry(dataUser).State = EntityState.Modified;
+                    return await _datacontext.SaveChangesAsync() > 0;
                 }
                 else
                 {
-                    userExist.Status = "I";
-                    _datacontext.Entry(userExist).State = EntityState.Modified;
-                    return await _datacontext.SaveChangesAsync() > 0;
+                    throw new Exception($"Error, User no registrado.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{ex.Message}");
+                Console.WriteLine($"Error en UpdateUser: {ex.Message}");
                 throw;
             }
         }
